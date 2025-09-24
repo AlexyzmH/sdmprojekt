@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30517.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fahrzeug-Datenbank", "Fahrzeug-Datenbank\Fahrzeug-Datenbank.csproj", "{FA1A7D98-015F-4D21-92D6-610E5E27E51C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FA1A7D98-015F-4D21-92D6-610E5E27E51C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA1A7D98-015F-4D21-92D6-610E5E27E51C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA1A7D98-015F-4D21-92D6-610E5E27E51C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA1A7D98-015F-4D21-92D6-610E5E27E51C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0E7FAF0D-746E-4C41-80DE-708F8CBC924D}
+	EndGlobalSection
+EndGlobal
