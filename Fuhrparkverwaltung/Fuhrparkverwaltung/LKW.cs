@@ -6,7 +6,16 @@ using System.Threading.Tasks;
 
 namespace Fuhrparkverwaltung
 {
-    internal class LKW
+    internal class LKW : Fahrzeug
     {
+        private double ladekapazitaet;
+
+        public LKW()
+        {
+        
+        }
+
+        public LKW(string kennzeichen, string hersteller, string modell)
     }
 }
+
