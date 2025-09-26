@@ -15,7 +15,8 @@ namespace Fuhrparkverwaltung
         
         }
 
-        public LKW(string kennzeichen, string hersteller, string modell)
+        public LKW(string kennzeichen, string hersteller, string modell, int baujahr)
     }
 }
+
 
