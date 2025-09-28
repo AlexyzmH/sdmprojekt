@@ -65,7 +65,7 @@ namespace Fuhrparkverwaltung
                             case "1": // Fahrzeug löschen
                                 Console.Write("Kennzeichen des zu löschenden Fahrzeugs: ");
                                 string loeschKennzeichen = Console.ReadLine();
-                                SqlManager.DeleteFahrzeugByKennzeichen(loeschKennzeichen); // ✅ Einfach aufrufen
+                                SqlManager.DeleteFahrzeugByKennzeichen(loeschKennzeichen);
                                 break;
 
                             case "2": // Fahrzeug ändern
@@ -268,7 +268,6 @@ namespace Fuhrparkverwaltung
 
                             LKW neuerLKW = new LKW(neuesKennzeichen, hersteller, modell, baujahr, ladekapazitaet);
                             SqlManager.InsertFahrzeug(neuerLKW);
-                            Console.WriteLine("LKW wurde hinzugefügt.");
                         }
                         else if (fahrzeugTyp == "1")
                         {
@@ -283,7 +282,6 @@ namespace Fuhrparkverwaltung
 
                             PKW neuerPKW = new PKW(neuesKennzeichen, hersteller, modell, baujahr, anzahlTueren);
                             SqlManager.InsertFahrzeug(neuerPKW);
-                            Console.WriteLine("PKW wurde hinzugefügt.");
                         }
                         else
                         {

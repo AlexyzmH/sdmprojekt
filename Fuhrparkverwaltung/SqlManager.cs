@@ -11,44 +11,77 @@ namespace Fuhrparkverwaltung
 
         static SqlManager()
         {
+            // Pfad zur .env-Datei
+            /*
+             * Beispiel-Inhalt der .env-Datei:
+
+                DB_SERVER=""
+                DB_PORT=""
+                DB_NAME=""
+                DB_USER=""
+                DB_PASSWORD=""
+
+             */
+
+
             string envPath = Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\.env");
             string fullEnvPath = Path.GetFullPath(envPath);
 
             if (File.Exists(fullEnvPath))
+
+                //.env credentials laden:
             {
                 Env.Load(fullEnvPath);
 
                 var server = Env.GetString("DB_SERVER");
                 var port = Env.GetString("DB_PORT");
                 var dbName = Env.GetString("DB_NAME");
-                var user = Env.GetString("DB_USER");
-                var password = Env.GetString("DB_PASSWORD");
+                var trustedConnection = Env.GetString("DB_TRUSTED_CONNECTION");
+
+                // Verbindung mit der Datenbank erstellen:
 
                 if (!string.IsNullOrEmpty(server) && !string.IsNullOrEmpty(port) &&
-                    !string.IsNullOrEmpty(dbName) && !string.IsNullOrEmpty(user))
+                    !string.IsNullOrEmpty(dbName))
                 {
-                    connectionString = $"Server={server},{port};Database={dbName};User Id={user};Password={password};";
+                    if (!string.IsNullOrEmpty(trustedConnection) && trustedConnection.ToLower() == "true")
+                    {
+                        connectionString = $"Server={server},{port};Database={dbName};Trusted_Connection=True;";
+                    }
+                    else
+                    {
+                        var user = Env.GetString("DB_USER");
+                        var password = Env.GetString("DB_PASSWORD");
+
+                        if (!string.IsNullOrEmpty(user))
+                        {
+                            connectionString = $"Server={server},{port};Database={dbName};User Id={user};Password={password};";
+                        }
+                    }
                 }
             }
         }
 
+
+        //Methode, um ein Fahrzeug in der Datenbank hinzuzufügen:
+
         public static void InsertFahrzeug(Fahrzeug fahrzeug)
         {
+            //Verbindung mit Microsoft SQL Server Management Studio überprüfen:
+
             if (string.IsNullOrEmpty(connectionString))
             {
-                Console.WriteLine("Connection string is empty. Cannot insert Fahrzeug.");
+                Console.WriteLine("Keine Verbindung vorhanden.");
                 return;
             }
 
-            string insertFahrzeugQuery = @"
-        INSERT INTO Fahrzeuge (Kennzeichen, Hersteller, Modell, Baujahr)
-        VALUES (@Kennzeichen, @Hersteller, @Modell, @Baujahr)";
+            //SQL insert statement:
+
+            string insertFahrzeugQuery = @"INSERT INTO Fahrzeuge (Kennzeichen, Hersteller, Modell, Baujahr) VALUES (@Kennzeichen, @Hersteller, @Modell, @Baujahr)";
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
 
-                // Start transaction
                 SqlTransaction transaction = connection.BeginTransaction();
 
                 try
@@ -63,12 +96,11 @@ namespace Fuhrparkverwaltung
                         command.ExecuteNonQuery();
                     }
 
-                    // Insert into PKW or LKW table if applicable
+                    // Insert statement für PKW-Spalten:  
+
                     if (fahrzeug is PKW pkw)
                     {
-                        string insertPKWQuery = @"
-                    INSERT INTO PKW (Kennzeichen, AnzahlTueren)
-                    VALUES (@Kennzeichen, @AnzahlTueren)";
+                        string insertPKWQuery = @"INSERT INTO PKW (Kennzeichen, AnzahlTueren) VALUES (@Kennzeichen, @AnzahlTueren)";
 
                         using (SqlCommand command = new SqlCommand(insertPKWQuery, connection, transaction))
                         {
@@ -78,11 +110,12 @@ namespace Fuhrparkverwaltung
                             command.ExecuteNonQuery();
                         }
                     }
+
+                    // Insert statement für LKW-Spalten:
+
                     else if (fahrzeug is LKW lkw)
                     {
-                        string insertLKWQuery = @"
-                    INSERT INTO LKW (Kennzeichen, Ladekapazitaet)
-                    VALUES (@Kennzeichen, @Ladekapazitaet)";
+                        string insertLKWQuery = @"INSERT INTO LKW (Kennzeichen, Ladekapazitaet) VALUES (@Kennzeichen, @Ladekapazitaet)";
 
                         using (SqlCommand command = new SqlCommand(insertLKWQuery, connection, transaction))
                         {
@@ -94,7 +127,7 @@ namespace Fuhrparkverwaltung
                     }
 
                     transaction.Commit();
-                    Console.WriteLine("Fahrzeug erfolgreich in die Datenbank eingefügt.");
+                    Console.WriteLine("Fahrzeug erfolgreich hinzugefügt.");
                 }
                 catch (Exception ex)
                 {
@@ -104,19 +137,28 @@ namespace Fuhrparkverwaltung
             }
         }
 
+
+        //Methode, um ein Fahrzeug aus der Datenbank abzufragen:
+
         public static Fahrzeug GetFahrzeugByKennzeichen(string kennzeichen)
         {
+            //Verbindung mit Microsoft SQL Server Management Studio überprüfen:
+
             if (string.IsNullOrEmpty(connectionString))
             {
-                Console.WriteLine("Connection string is empty. Cannot read Fahrzeug.");
+                Console.WriteLine("Keine Verbindung vorhanden.");
                 return null;
             }
 
-            // Query to get base Fahrzeug data
+            // SQL statement, um ein Fahrzeug aus der Datenbank abzufragen:
+
             string selectFahrzeugQuery = @"SELECT Kennzeichen, Hersteller, Modell, Baujahr FROM Fahrzeuge WHERE Kennzeichen = @Kennzeichen";
 
-            // Queries to check PKW and LKW specific data
+            // SQL statement, um die Daten von einem PKW abzufragen:
+
             string selectPKWQuery = @"SELECT AnzahlTueren FROM PKW WHERE Kennzeichen = @Kennzeichen";
+
+            // SQL statement, um die Daten von einem LKW abzufragen:
 
             string selectLKWQuery = @"SELECT Ladekapazitaet FROM LKW WHERE Kennzeichen = @Kennzeichen";
 
@@ -126,7 +168,8 @@ namespace Fuhrparkverwaltung
                 {
                     connection.Open();
 
-                    // Get base Fahrzeug data
+                    // Fahrzeugdaten abfragen:
+
                     using (SqlCommand cmdFahrzeug = new SqlCommand(selectFahrzeugQuery, connection))
                     {
                         cmdFahrzeug.Parameters.AddWithValue("@Kennzeichen", kennzeichen);
@@ -138,7 +181,8 @@ namespace Fuhrparkverwaltung
                                 return null;
                             }
 
-                            // Read base Fahrzeug data
+                            // Fahrzeugdaten lesen:
+
                             string kfzKennzeichen = reader.GetString(0);
                             string hersteller = reader.GetString(1);
                             string modell = reader.GetString(2);
@@ -146,7 +190,8 @@ namespace Fuhrparkverwaltung
 
                             reader.Close();
 
-                            // Now check if it's a PKW
+                            // PKW Daten lesen:
+
                             using (SqlCommand cmdPKW = new SqlCommand(selectPKWQuery, connection))
                             {
                                 cmdPKW.Parameters.AddWithValue("@Kennzeichen", kennzeichen);
@@ -159,7 +204,8 @@ namespace Fuhrparkverwaltung
                                 }
                             }
 
-                            // Check if it's a LKW
+                            // LKW Daten lesen:
+
                             using (SqlCommand cmdLKW = new SqlCommand(selectLKWQuery, connection))
                             {
                                 cmdLKW.Parameters.AddWithValue("@Kennzeichen", kennzeichen);
@@ -172,7 +218,6 @@ namespace Fuhrparkverwaltung
                                 }
                             }
 
-                            // If neither PKW nor LKW, return base Fahrzeug
                             return new Fahrzeug(kfzKennzeichen, hersteller, modell, baujahr);
                         }
                     }
@@ -187,11 +232,15 @@ namespace Fuhrparkverwaltung
 
 
 
+        //Methode, um ein Fahrzeug aus der Datenbank zu löschen:
+
         public static void DeleteFahrzeugByKennzeichen(string kennzeichen)
         {
+            //Verbindung mit Microsoft SQL Server Management Studio überprüfen:
+
             if (string.IsNullOrEmpty(connectionString))
             {
-                Console.WriteLine("Connection string is empty. Cannot delete Fahrzeug.");
+                Console.WriteLine("Keine Verbindung vorhanden.");
                 return;
             }
 
@@ -202,7 +251,8 @@ namespace Fuhrparkverwaltung
 
                 try
                 {
-                    // Delete from PKW if exists
+                    // PKW löschen:
+
                     string deletePKW = "DELETE FROM PKW WHERE Kennzeichen = @Kennzeichen";
                     using (SqlCommand cmd = new SqlCommand(deletePKW, connection, transaction))
                     {
@@ -210,7 +260,8 @@ namespace Fuhrparkverwaltung
                         cmd.ExecuteNonQuery();
                     }
 
-                    // Delete from LKW if exists
+                    // LKW löschen:
+
                     string deleteLKW = "DELETE FROM LKW WHERE Kennzeichen = @Kennzeichen";
                     using (SqlCommand cmd = new SqlCommand(deleteLKW, connection, transaction))
                     {
@@ -218,7 +269,8 @@ namespace Fuhrparkverwaltung
                         cmd.ExecuteNonQuery();
                     }
 
-                    // Delete from Fahrzeuge
+                    // Fahrzeug löschen:
+
                     string deleteFahrzeug = "DELETE FROM Fahrzeuge WHERE Kennzeichen = @Kennzeichen";
                     using (SqlCommand cmd = new SqlCommand(deleteFahrzeug, connection, transaction))
                     {
@@ -246,11 +298,15 @@ namespace Fuhrparkverwaltung
 
 
 
+        //Methode, um die Daten eines Fahrzeugs zu ändern:
+
         public static void UpdateFahrzeug(Fahrzeug fahrzeug)
         {
+            //Verbindung mit Microsoft SQL Server Management Studio überprüfen:
+
             if (string.IsNullOrEmpty(connectionString))
             {
-                Console.WriteLine("Connection string is empty. Cannot update Fahrzeug.");
+                Console.WriteLine("Keine Verbindung vorhanden.");
                 return;
             }
 
@@ -261,7 +317,7 @@ namespace Fuhrparkverwaltung
 
                 try
                 {
-                    // Update Fahrzeuge base table
+                    // Update Fahrzeuge Tabelle:
                     string updateFahrzeugQuery = @"
                 UPDATE Fahrzeuge
                 SET Hersteller = @Hersteller,
@@ -287,7 +343,8 @@ namespace Fuhrparkverwaltung
 
                     if (fahrzeug is PKW pkw)
                     {
-                        // Update PKW
+                        // Update PKW Tabelle:
+
                         string updatePKW = @"
                     UPDATE PKW
                     SET AnzahlTueren = @AnzahlTueren
@@ -305,7 +362,8 @@ namespace Fuhrparkverwaltung
                     }
                     else if (fahrzeug is LKW lkw)
                     {
-                        // Update LKW
+                        // Update LKW Tabelle:
+
                         string updateLKW = @"
                     UPDATE LKW
                     SET Ladekapazitaet = @Ladekapazitaet
@@ -321,7 +379,6 @@ namespace Fuhrparkverwaltung
                                 Console.WriteLine("Kein LKW-Datensatz gefunden, bitte Fahrzeug neu anlegen.");
                         }
                     }
-                    // else do nothing for base Fahrzeug - no extra tables
 
                     transaction.Commit();
                     Console.WriteLine("Fahrzeug erfolgreich aktualisiert.");
@@ -333,9 +390,6 @@ namespace Fuhrparkverwaltung
                 }
             }
         }
-
-
-
 
     }
 }
